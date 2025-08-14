@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe i18n - Powerful i18n Translation Management CLI Tool</title>
+    <meta name="description" content="A powerful i18n translation management CLI tool for Vue.js, Next.js, and other JavaScript projects. Designed for AI agents to efficiently manage translations.">
+    <meta name="keywords" content="i18n, internationalization, translation, CLI, Vue.js, Next.js, JavaScript, AI">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism.min.css">
+    <script defer data-domain="vibei18n.com" src="https://click.pageview.click/js/script.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <span class="logo-icon">🌍</span>
+                Vibe i18n
+            </a>
+            <nav class="nav">
+                <ul class="nav-links">
+                    <li><a href="#ai-agent">AI Agent</a></li>
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#programmatic">API</a></li>
+                    <li><a href="https://github.com/becoolme/vibe-i18n" target="_blank">GitHub</a></li>
+                </ul>
+                <button class="mobile-menu-btn">☰</button>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Vibe i18n</h1>
+                <p class="hero-subtitle">
+                    A powerful i18n translation management CLI tool for Vue.js, Next.js, and other JavaScript projects. 
+                    Designed for AI agents to efficiently manage translations without reading large locale files, saving tokens and preventing file corruption.
+                </p>
+                <div class="cta-buttons">
+                    <a href="#programmatic" class="btn btn-primary">
+                        Get Started
+                    </a>
+                    <a href="https://github.com/becoolme/vibe-i18n" class="btn btn-secondary" target="_blank">
+                        View on GitHub
+                    </a>
+                </div>
+                <div class="code-demo">
+                    <pre><code class="language-bash">npx vibei18n</code></pre>
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Agent Section -->
+        <section id="ai-agent" class="ai-agent">
+            <div class="section-content">
+                <h2 class="section-title">AI Agent Integration</h2>
+                <p class="section-subtitle">
+                    For AI agents working with translations, use the CLI commands instead of reading/writing files directly to ensure data integrity and proper validation.
+                </p>
+                <div class="ai-prompt">
+                    <h3>Prompt for AI Agents:</h3>
+                    <div class="prompt-content">
+                        <p>When working with i18n translations, ALWAYS use the CLI commands instead of reading or modifying locale files directly. This ensures proper validation, formatting, and prevents corruption.</p>
+                        
+                        <h4>Available commands for translation management:</h4>
+                        <ul>
+                            <li>Show help: <code>npx vibei18n --help</code></li>
+                            <li>Get translation: <code>npx vibei18n get &lt;locale&gt; &lt;key&gt;</code></li>
+                            <li>Set translation: <code>npx vibei18n set &lt;locale&gt; &lt;key&gt; &lt;value&gt;</code></li>
+                            <li>Check if exists: <code>npx vibei18n has &lt;locale&gt; &lt;key&gt;</code></li>
+                            <li>Get all locales for key: <code>npx vibei18n getAll &lt;key&gt;</code></li>
+                            <li>Find missing: <code>npx vibei18n missing &lt;key&gt;</code></li>
+                            <li>Check completeness: <code>npx vibei18n check --detailed</code></li>
+                            <li>Show statistics: <code>npx vibei18n stats</code></li>
+                            <li>List locales: <code>npx vibei18n locales</code></li>
+                            <li>Find hardcoded strings: <code>npx vibei18n hardcode-check --verbose</code></li>
+                        </ul>
+                        
+                        <h4>Example workflow:</h4>
+                        <ol>
+                            <li>Check current state: <code>npx vibei18n stats</code></li>
+                            <li>Get specific translation: <code>npx vibei18n get en-US common.loading</code></li>
+                            <li>Update translation: <code>npx vibei18n set zh-hans common.loading "加载中..."</code></li>
+                            <li>Verify change: <code>npx vibei18n get zh-hans common.loading</code></li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="features">
+            <div class="section-content">
+                <h2 class="section-title">Powerful Features</h2>
+                <p class="section-subtitle">
+                    Everything you need to manage translations efficiently and effectively
+                </p>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <span class="feature-icon">CLI</span>
+                        <h3>CLI-First Approach</h3>
+                        <p>Use <code>npx vibei18n</code> to manage translations with intuitive commands. Perfect for AI agents and automated workflows.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">SCAN</span>
+                        <h3>Smart Locale Scanning</h3>
+                        <p>Automatically discovers locale files and provides insights into your translation coverage and completeness.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">CHECK</span>
+                        <h3>Translation Completeness</h3>
+                        <p>Find missing translations across all locales with detailed reporting and prioritized suggestions.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">DETECT</span>
+                        <h3>Hardcoded String Detection</h3>
+                        <p>Scan your codebase for hardcoded strings that should be internationalized. Skips code blocks intelligently.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">STATS</span>
+                        <h3>Detailed Statistics</h3>
+                        <p>Get comprehensive insights into translation coverage, missing keys, and duplicate values across locales.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">DUPE</span>
+                        <h3>Duplicate Detection</h3>
+                        <p>Find duplicate translations across locales and identify opportunities for consolidation and optimization.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">API</span>
+                        <h3>Programmatic API</h3>
+                        <p>Use as a library in your Node.js projects for advanced automation and custom workflows.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">JSON</span>
+                        <h3>Multiple Formats</h3>
+                        <p>Support for JSON and JS locale files with seamless conversion and validation capabilities.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Programmatic Usage Section -->
+        <section id="programmatic" class="programmatic">
+            <div class="section-content">
+                <h2 class="section-title">Programmatic Usage</h2>
+                <p class="section-subtitle">
+                    Use vibei18n as a library in your Node.js projects for advanced automation and custom workflows
+                </p>
+                <div class="usage-examples">
+                    <div class="usage-example">
+                        <h3>Basic Setup</h3>
+                        <pre><code class="language-javascript">import { I18nHelper } from 'vibei18n';
+
+// Initialize with default directory (./i18n/locales)
+const helper = new I18nHelper();
+
+// Or specify custom directory
+const helper = new I18nHelper('./custom/locales');</code></pre>
+                    </div>
+                    <div class="usage-example">
+                        <h3>Translation Operations</h3>
+                        <pre><code class="language-javascript">// Get all available locales
+const locales = helper.getLocales();
+
+// Get a translation
+const value = helper.get('en-US', 'common.loading');
+
+// Set a translation
+helper.set('zh-hans', 'page.title', '页面标题');</code></pre>
+                    </div>
+                    <div class="usage-example">
+                        <h3>Analysis & Validation</h3>
+                        <pre><code class="language-javascript">// Check completeness
+const results = helper.checkTranslations(true);
+console.log('Missing translations:', results.summary.totalMissing);
+
+// Find hardcoded strings
+const findings = helper.checkHardcodedStrings('./src', {
+  extensions: ['.vue', '.js', '.ts'],
+  verbose: true
+});</code></pre>
+                    </div>
+                    <div class="usage-example">
+                        <h3>Batch Updates</h3>
+                        <pre><code class="language-javascript">// Batch update multiple translations
+helper.batchUpdate({
+  'en-US': {
+    'page.title': 'Page Title',
+    'page.description': 'Page Description'
+  },
+  'zh-hans': {
+    'page.title': '页面标题',
+    'page.description': '页面描述'
+  }
+});</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Vibe i18n</h3>
+                <p>A powerful i18n translation management CLI tool designed for modern JavaScript projects and AI workflows.</p>
+            </div>
+            <div class="footer-section">
+                <h3>Links</h3>
+                <ul>
+                    <li><a href="https://github.com/becoolme/vibe-i18n" target="_blank">GitHub Repository</a></li>
+                    <li><a href="https://github.com/becoolme/vibe-i18n/issues" target="_blank">Report Issues</a></li>
+                    <li><a href="https://github.com/becoolme/vibe-i18n/discussions" target="_blank">Discussions</a></li>
+                    <li><a href="https://www.npmjs.com/package/vibei18n" target="_blank">NPM Package</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h3>Documentation</h3>
+                <ul>
+                    <li><a href="https://github.com/becoolme/vibe-i18n/blob/main/README.md" target="_blank">Getting Started</a></li>
+                    <li><a href="https://github.com/becoolme/vibe-i18n/blob/main/README.zh-CN.md" target="_blank">中文文档</a></li>
+                    <li><a href="https://github.com/becoolme/vibe-i18n/blob/main/README.zh-TW.md" target="_blank">繁體中文</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Vibe i18n. Released under MIT License. Made with ❤️ for vibe coding.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

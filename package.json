@@ -1,0 +1,46 @@
+{
+  "name": "vibei18n",
+  "version": "1.0.2",
+  "description": "A powerful i18n translation management CLI tool",
+  "main": "dist/index.js",
+  "type": "module",
+  "bin": {
+    "vibei18n": "./bin/cli.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "node build.js",
+    "test": "node --test test/I18nHelper.test.js test/cli.test.js",
+    "test:watch": "node --test --watch test/I18nHelper.test.js test/cli.test.js",
+    "release:patch": "node scripts/release.js patch",
+    "release:minor": "node scripts/release.js minor",
+    "release:major": "node scripts/release.js major",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "translation",
+    "cli",
+    "vue",
+    "react",
+    "locale"
+  ],
+  "author": "",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/becoolme/vibe-i18n.git"
+  },
+  "bugs": {
+    "url": "https://github.com/becoolme/vibe-i18n/issues"
+  },
+  "homepage": "https://github.com/becoolme/vibe-i18n#readme"
+}
