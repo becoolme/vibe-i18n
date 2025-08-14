@@ -1,0 +1,152 @@
+name: PR Check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Fetch all history for better diff analysis
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Check for breaking changes
+      run: |
+        echo "Checking for potential breaking changes..."
+        
+        # Check if main API files changed
+        if git diff --name-only origin/main...HEAD | grep -E "(src/I18nHelper.js|src/index.js|bin/cli.js)"; then
+          echo "⚠️ Core API files changed - please review for breaking changes"
+        fi
+        
+        # Check if package.json version changed
+        if git diff --name-only origin/main...HEAD | grep "package.json"; then
+          echo "📦 package.json changed - checking version bump"
+          git diff origin/main...HEAD package.json | grep '"version"' || echo "No version change detected"
+        fi
+    
+    - name: Run tests
+      run: npm test
+    
+    - name: Test CLI functionality
+      run: |
+        npm run build
+        node bin/cli.js --help
+        node bin/cli.js init --dir ./test-pr
+        node bin/cli.js check --dir ./test-pr
+        node bin/cli.js hardcode-check --ext .js,.vue ./test || true  # Allow failure if no files found
+        rm -rf ./test-pr
+    
+    - name: Check bundle size
+      run: |
+        npm run build
+        echo "Checking bundle size..."
+        du -sh dist/
+        find dist/ -name "*.js" -exec wc -l {} \; | sort -nr
+    
+    - name: Validate package.json
+      run: |
+        echo "Validating package.json..."
+        node -e "
+          const pkg = require('./package.json');
+          
+          // Check required fields
+          const required = ['name', 'version', 'description', 'main', 'bin', 'keywords', 'license'];
+          const missing = required.filter(field => !pkg[field]);
+          if (missing.length > 0) {
+            console.error('❌ Missing required fields:', missing);
+            process.exit(1);
+          }
+          
+          // Check engines
+          if (!pkg.engines || !pkg.engines.node) {
+            console.error('❌ Missing Node.js version requirement');
+            process.exit(1);
+          }
+          
+          // Check bin entry
+          if (!pkg.bin || !pkg.bin.vibei18n) {
+            console.error('❌ Missing or invalid bin entry');
+            process.exit(1);
+          }
+          
+          console.log('✅ package.json validation passed');
+        "
+
+  comment-pr:
+    name: Comment on PR
+    runs-on: ubuntu-latest
+    needs: pr-validation
+    if: always()
+    
+    steps:
+    - name: Comment PR
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { data: comments } = await github.rest.issues.listComments({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: context.issue.number,
+          });
+          
+          // Check if we already commented
+          const botComment = comments.find(comment => 
+            comment.user.type === 'Bot' && comment.body.includes('PR Check Results')
+          );
+          
+          const jobStatus = '${{ needs.pr-validation.result }}';
+          const emoji = jobStatus === 'success' ? '✅' : '❌';
+          
+          const body = `## ${emoji} PR Check Results
+          
+          **Status**: ${jobStatus === 'success' ? 'Passed' : 'Failed'}
+          
+          ### What was checked:
+          - ✅ Package validation
+          - ✅ Test suite execution  
+          - ✅ CLI functionality
+          - ✅ Bundle size analysis
+          - ✅ Breaking change detection
+          
+          ${jobStatus === 'success' 
+            ? '🎉 All checks passed! This PR is ready for review.' 
+            : '⚠️ Some checks failed. Please review the CI logs and fix any issues.'
+          }
+          
+          ### Next steps:
+          ${jobStatus === 'success' 
+            ? '- Request code review\n- Merge when approved' 
+            : '- Check the failed CI jobs\n- Fix any issues\n- Push updates to trigger re-check'
+          }
+          `;
+          
+          if (botComment) {
+            await github.rest.issues.updateComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: botComment.id,
+              body: body
+            });
+          } else {
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body
+            });
+          }

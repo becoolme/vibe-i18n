@@ -1,0 +1,138 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  test:
+    name: Test before release
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run build
+      run: npm run build
+    
+    - name: Run tests
+      run: npm test
+    
+    - name: Test CLI functionality
+      run: |
+        node bin/cli.js --help
+        node bin/cli.js init --dir ./test-release-locales
+        node bin/cli.js check --dir ./test-release-locales
+        rm -rf ./test-release-locales
+
+  publish:
+    name: Publish to NPM
+    needs: test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        registry-url: 'https://registry.npmjs.org'
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Build package
+      run: npm run build
+    
+    - name: Verify package contents
+      run: |
+        npm pack --dry-run
+        echo "Package contents:"
+        tar -tzf "$(npm pack --silent)" | head -20
+    
+    - name: Publish to NPM
+      run: npm publish
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    
+    - name: Create GitHub Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## Changes in this release
+          
+          ### Features
+          - Powerful i18n translation management CLI tool
+          - Support for Vue.js, React JSX/TSX, and other frameworks
+          - Hardcoded string detection with smart filtering
+          - Translation completeness checking
+          - Duplicate translation detection
+          - Code/pre tag content filtering
+          
+          ### Installation
+          ```bash
+          npm install -g vibei18n
+          # or use directly
+          npx vibei18n --help
+          ```
+          
+          ### Usage
+          ```bash
+          # Initialize locales structure
+          npx vibei18n init
+          
+          # Check translation completeness
+          npx vibei18n check --detailed
+          
+          # Find hardcoded strings
+          npx vibei18n hardcode-check --verbose
+          ```
+          
+          See the [README](README.md) for full documentation.
+        draft: false
+        prerelease: false
+
+  test-published-package:
+    name: Test published package
+    needs: publish
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+    
+    - name: Wait for package to be available
+      run: sleep 60
+    
+    - name: Test global installation
+      run: |
+        npm install -g vibei18n@latest
+        vibei18n --help
+        vibei18n init --dir ./test-global-install
+        vibei18n locales --dir ./test-global-install
+    
+    - name: Test npx usage
+      run: |
+        rm -rf ./test-global-install
+        npx vibei18n@latest init --dir ./test-npx
+        npx vibei18n@latest locales --dir ./test-npx

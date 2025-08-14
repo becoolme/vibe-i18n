@@ -1,0 +1,145 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    name: Test on Node.js ${{ matrix.node-version }} and ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      matrix:
+        node-version: [16.x, 18.x, 20.x, 22.x]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run build
+      run: npm run build
+    
+    - name: Run tests
+      run: npm test
+    
+    - name: Test CLI commands
+      run: |
+        node bin/cli.js --help
+        node bin/cli.js init --dir ./test-ci-locales
+        node bin/cli.js locales --dir ./test-ci-locales
+        node bin/cli.js get en-US common.loading --dir ./test-ci-locales
+    
+    - name: Cleanup
+      run: rm -rf ./test-ci-locales
+      if: always()
+
+  lint:
+    name: Lint and Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Check file formatting
+      run: |
+        # Check for common issues
+        echo "Checking for trailing whitespace..."
+        if grep -r "[[:space:]]$" src/ bin/ test/ --include="*.js" --include="*.json"; then
+          echo "❌ Found trailing whitespace"
+          exit 1
+        else
+          echo "✅ No trailing whitespace found"
+        fi
+        
+        echo "Checking for consistent line endings..."
+        if file src/*.js bin/*.js | grep -q CRLF; then
+          echo "❌ Found CRLF line endings, please use LF"
+          exit 1
+        else
+          echo "✅ Line endings are consistent"
+        fi
+
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run build
+      run: npm run build
+    
+    - name: Run tests with coverage
+      run: npm test -- --experimental-test-coverage --test-reporter=lcov > coverage.lcov
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.lcov
+        flags: unittests
+        name: codecov-umbrella
+      continue-on-error: true
+
+  security:
+    name: Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Run security audit
+      run: npm audit --audit-level=moderate
+    
+    - name: Check for known vulnerabilities
+      run: |
+        echo "Checking package-lock.json for known vulnerabilities..."
+        if npm audit --audit-level=high --dry-run; then
+          echo "✅ No high-severity vulnerabilities found"
+        else
+          echo "❌ High-severity vulnerabilities detected"
+          npm audit --audit-level=high
+          exit 1
+        fi

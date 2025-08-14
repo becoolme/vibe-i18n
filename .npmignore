@@ -1,0 +1,31 @@
+# Source files (only publish dist)
+src/
+
+# Test files
+test/
+
+# Development files
+build.js
+.gitignore
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Development dependencies
+node_modules/
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+tmp/
+temp/

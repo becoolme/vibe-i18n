@@ -1,0 +1,17 @@
+# Global owners
+* @becoolme
+
+# Core functionality
+/src/ @becoolme
+/bin/ @becoolme
+
+# Documentation
+README.md @becoolme
+/docs/ @becoolme
+
+# CI/CD and configuration
+/.github/ @becoolme
+package.json @becoolme
+
+# Tests
+/test/ @becoolme
