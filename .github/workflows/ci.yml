@@ -106,7 +106,7 @@ jobs:
       run: npm test -- --experimental-test-coverage --test-reporter=lcov > coverage.lcov
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         file: ./coverage.lcov
         flags: unittests
