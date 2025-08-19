@@ -159,7 +159,7 @@ async function main() {
           console.error('Example: npx vibei18n setMultiple page.title \'{"zh-hans":"标题","fr-FR":"Titre"}\'');
           process.exit(1);
         }
-        
+
         let translations;
         try {
           translations = JSON.parse(rest[1]);
@@ -177,11 +177,11 @@ async function main() {
 
         const skipIfExists = rest.includes('--skip-if-exists');
         const results = helper.setMultiple(translations, rest[0], skipIfExists);
-        
+
         console.log(`\n📝 Setting translations for "${rest[0]}":`);
         let successCount = 0;
         let failCount = 0;
-        
+
         for (const [locale, success] of Object.entries(results)) {
           if (success) {
             console.log(`   ✅ ${locale}: "${translations[locale]}"`);
@@ -191,9 +191,9 @@ async function main() {
             failCount++;
           }
         }
-        
+
         console.log(`\n📊 Results: ${successCount} successful, ${failCount} failed`);
-        
+
         if (failCount > 0) {
           process.exit(1);
         }
