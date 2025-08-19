@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   test:
     name: Test before release
@@ -91,43 +95,46 @@ jobs:
         NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
     - name: Create GitHub Release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      uses: softprops/action-gh-release@v2
       with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
         body: |
           ## Changes in this release
-
-          ### Features
-          - Powerful i18n translation management CLI tool
-          - Support for Vue.js, React JSX/TSX, and other frameworks
-          - Hardcoded string detection with smart filtering
-          - Translation completeness checking
-          - Duplicate translation detection
-          - Code/pre tag content filtering
+          
+          ### New Features
+          - ✨ Added `setMultiple` command for bulk translation updates
+          - 🔍 Enhanced missing translation detection with `missing-translations` command
+          - 🛠️ Added comprehensive lint scripts for code formatting
+          - 🎯 Improved hardcoded string detection with better filtering
+          
+          ### Improvements
+          - 📦 Fixed package verification in CI/CD pipeline
+          - 🧹 Removed trailing whitespace across all source files
+          - 📚 Enhanced documentation and usage examples
+          - ⚡ Better error handling and user feedback
+          
+          ### Tools & Commands
+          ```bash
+          # New bulk translation command
+          npx vibei18n setMultiple page.title '{"zh-hans":"标题","fr-FR":"Titre"}'
+          
+          # Check for missing translations
+          npx vibei18n missing-translations --verbose
+          
+          # Format checking (for contributors)
+          npm run lint
+          npm run lint:whitespace:fix
+          ```
 
           ### Installation
           ```bash
-          pnpm add -g vibei18n
+          npm install -g vibei18n
           # or use directly
           npx vibei18n --help
           ```
 
-          ### Usage
-          ```bash
-          # Initialize locales structure
-          npx vibei18n init
-
-          # Check translation completeness
-          npx vibei18n check --detailed
-
-          # Find hardcoded strings
-          npx vibei18n hardcode-check --verbose
-          ```
-
-          See the [README](README.md) for full documentation.
+          See the [README](README.md) for complete documentation.
         draft: false
         prerelease: false
 
