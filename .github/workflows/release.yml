@@ -75,9 +75,15 @@ jobs:
     
     - name: Verify package contents
       run: |
-        pnpm pack --dry-run
+        echo "Building package for verification..."
+        pnpm pack > /dev/null
+        PACKAGE_FILE=$(ls *.tgz | head -1)
+        echo "Package file: $PACKAGE_FILE"
         echo "Package contents:"
-        tar -tzf "$(pnpm pack --silent)" | head -20
+        tar -tzf "$PACKAGE_FILE" | head -20
+        echo "Package size: $(du -h "$PACKAGE_FILE" | cut -f1)"
+        echo "Cleaning up verification package..."
+        rm "$PACKAGE_FILE"
     
     - name: Publish to NPM
       run: pnpm publish --no-git-checks
