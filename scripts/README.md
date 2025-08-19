@@ -56,7 +56,7 @@ The scripts check the following file types and directories:
 ### Directories
 - `src/` - Source code
 - `bin/` - Executables
-- `test/` - Test files  
+- `test/` - Test files
 - `scripts/` - Development scripts
 - `.github/` - GitHub workflows
 
