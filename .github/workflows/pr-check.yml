@@ -16,7 +16,7 @@ jobs:
         fetch-depth: 0  # Fetch all history for better diff analysis
 
     - name: Setup pnpm
-      uses: pnpm/action-setup@v2
+      uses: pnpm/action-setup@v4
       with:
         version: 8
 
