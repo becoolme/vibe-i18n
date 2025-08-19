@@ -154,7 +154,7 @@ jobs:
 
     - name: Test global installation
       run: |
-        pnpm add -g vibei18n@latest
+        npm install -g vibei18n@latest
         vibei18n --help
         vibei18n init --dir ./test-global-install
         vibei18n locales --dir ./test-global-install
