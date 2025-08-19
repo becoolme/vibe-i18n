@@ -1040,6 +1040,215 @@ export class I18nHelper {
   }
 
   /**
+   * Check for missing translations by comparing $t() usage with locale files
+   * @param {string} projectDir - The project directory to scan
+   * @param {Object} options - Options for the check
+   * @returns {Object} Results of the missing translation check
+   */
+  checkMissingTranslations(projectDir = process.cwd(), options = {}) {
+    const {
+      extensions = ['.vue', '.jsx', '.tsx'],
+      excludeDirs = ['node_modules', '.git', 'dist', 'build', '.nuxt', '.output'],
+      baseLocale = 'en-US',
+      verbose = false
+    } = options;
+
+    console.log('🔍 Checking for missing translations...');
+    console.log(`📁 Directory: ${projectDir}`);
+    console.log(`📄 Extensions: ${extensions.join(', ')}`);
+
+    // 1. Extract all $t() keys from project files
+    const allKeys = new Set();
+    const fileKeyMap = {};
+
+    const scanDirectory = (dir) => {
+      try {
+        const items = fs.readdirSync(dir);
+
+        for (const item of items) {
+          const fullPath = path.join(dir, item);
+          const relativePath = path.relative(projectDir, fullPath);
+
+          // Skip excluded directories
+          if (excludeDirs.some(excluded => relativePath.includes(excluded))) {
+            continue;
+          }
+
+          const stat = fs.statSync(fullPath);
+
+          if (stat.isDirectory()) {
+            scanDirectory(fullPath);
+          } else if (stat.isFile()) {
+            // Check if file has target extension
+            const ext = path.extname(item);
+            if (extensions.includes(ext)) {
+              const keys = this._extractTranslationKeys(fullPath, relativePath);
+              if (keys.length > 0) {
+                fileKeyMap[relativePath] = keys;
+                keys.forEach(key => allKeys.add(key));
+              }
+            }
+          }
+        }
+      } catch (error) {
+        if (verbose) {
+          console.warn(`⚠️  Could not scan directory ${dir}: ${error.message}`);
+        }
+      }
+    };
+
+    scanDirectory(projectDir);
+
+    const allKeysArray = Array.from(allKeys).sort();
+    console.log(`🔑 Found ${allKeysArray.length} unique translation keys in ${Object.keys(fileKeyMap).length} files`);
+
+    // 2. Load base locale file
+    const baseContent = this.loadLocale(baseLocale);
+    if (!baseContent) {
+      console.error(`❌ Base locale file not found: ${baseLocale}`);
+      return null;
+    }
+
+    const availableKeys = this._getAllPaths(baseContent);
+    console.log(`📚 Found ${availableKeys.length} keys in ${baseLocale}.json`);
+
+    // 3. Compare keys
+    const missingKeys = [];
+    const foundKeys = [];
+
+    for (const key of allKeysArray) {
+      if (this.has(baseLocale, key)) {
+        foundKeys.push(key);
+      } else {
+        missingKeys.push(key);
+      }
+    }
+
+    // 4. Report results
+    this._reportMissingTranslations(missingKeys, foundKeys, fileKeyMap, allKeysArray, baseLocale, verbose);
+
+    return {
+      totalKeys: allKeysArray.length,
+      foundKeys: foundKeys.length,
+      missingKeys: missingKeys.length,
+      missingKeysList: missingKeys,
+      fileKeyMap
+    };
+  }
+
+  /**
+   * Extract $t() translation keys from a file
+   * @private
+   */
+  _extractTranslationKeys(filePath, relativePath) {
+    try {
+      const content = fs.readFileSync(filePath, 'utf8');
+      const keys = new Set();
+
+      // Match $t('key'), $t("key"), and {{ $t('key') }} patterns
+      const patterns = [
+        /\$t\s*\(\s*['"](.*?)['"]\s*\)/g,
+        /\{\{\s*\$t\s*\(\s*['"](.*?)['"]\s*\)\s*\}\}/g
+      ];
+
+      for (const pattern of patterns) {
+        let match;
+        while ((match = pattern.exec(content)) !== null) {
+          keys.add(match[1]);
+        }
+      }
+
+      return Array.from(keys);
+    } catch (error) {
+      console.warn(`⚠️  Could not read file ${filePath}: ${error.message}`);
+      return [];
+    }
+  }
+
+  /**
+   * Report missing translations
+   * @private
+   */
+  _reportMissingTranslations(missingKeys, foundKeys, fileKeyMap, allKeys, baseLocale, verbose) {
+    console.log('\n' + '='.repeat(60));
+    console.log('📊 MISSING TRANSLATIONS REPORT');
+    console.log('='.repeat(60));
+
+    console.log(`\n✅ Keys found in ${baseLocale}.json: ${foundKeys.length}`);
+    console.log(`❌ Keys missing in ${baseLocale}.json: ${missingKeys.length}`);
+    console.log(`📝 Total keys used in project: ${allKeys.length}`);
+
+    if (missingKeys.length > 0) {
+      console.log('\n🔴 MISSING TRANSLATION KEYS:');
+      console.log('-'.repeat(40));
+
+      // Group missing keys by file
+      const missingByFile = {};
+      for (const [file, keys] of Object.entries(fileKeyMap)) {
+        const fileMissing = keys.filter(key => missingKeys.includes(key));
+        if (fileMissing.length > 0) {
+          missingByFile[file] = fileMissing;
+        }
+      }
+
+      for (const [file, keys] of Object.entries(missingByFile)) {
+        console.log(`\n📄 ${file}:`);
+        for (const key of keys.slice(0, verbose ? keys.length : 5)) {
+          console.log(`   ❌ ${key}`);
+        }
+        if (!verbose && keys.length > 5) {
+          console.log(`   ... and ${keys.length - 5} more`);
+        }
+      }
+
+      console.log('\n📋 JSON FORMAT (for easy copy-paste):');
+      console.log('-'.repeat(40));
+      console.log('{');
+      missingKeys.slice(0, 20).forEach((key, index) => {
+        const comma = index < Math.min(19, missingKeys.length - 1) ? ',' : '';
+        console.log(`  "${key}": ""${comma}`);
+      });
+      if (missingKeys.length > 20) {
+        console.log(`  // ... and ${missingKeys.length - 20} more keys`);
+      }
+      console.log('}');
+
+      console.log('\n💡 SUGGESTIONS:');
+      console.log('-'.repeat(40));
+      console.log(`1. Add missing keys to your ${baseLocale}.json file`);
+      console.log('2. Use vibei18n to add translations:');
+      console.log('   npx vibei18n set en-US "key.path" "Translation value"');
+      console.log('3. Run this check again after adding translations');
+    } else {
+      console.log('\n🎉 All translation keys are properly defined!');
+    }
+
+    // Statistics by section
+    console.log('\n📈 STATISTICS BY SECTION:');
+    console.log('-'.repeat(40));
+
+    const sectionStats = {};
+    allKeys.forEach(key => {
+      const section = key.split('.')[0];
+      if (!sectionStats[section]) {
+        sectionStats[section] = { total: 0, missing: 0 };
+      }
+      sectionStats[section].total++;
+      if (missingKeys.includes(key)) {
+        sectionStats[section].missing++;
+      }
+    });
+
+    const sortedSections = Object.entries(sectionStats)
+      .sort(([,a], [,b]) => b.total - a.total);
+
+    for (const [section, stats] of sortedSections) {
+      const status = stats.missing > 0 ? `(${stats.missing} missing)` : '✅';
+      console.log(`   ${section}: ${stats.total} keys ${status}`);
+    }
+  }
+
+  /**
    * Report hardcoded string findings
    * @private
    */
