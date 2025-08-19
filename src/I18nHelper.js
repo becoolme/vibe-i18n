@@ -163,9 +163,21 @@ export class I18nHelper {
     // Navigate to the parent object
     for (let i = 0; i < keys.length - 1; i++) {
       const key = keys[i];
-      if (!(key in current)) {
+
+      // Check if current[key] exists and is a string (needs conversion to object)
+      if (key in current && typeof current[key] === 'string') {
+        console.warn(`⚠️  ${locale}: Converting "${path.split('.').slice(0, i + 1).join('.')}" from string to object to accommodate nested structure`);
         current[key] = {};
       }
+
+      if (!(key in current)) {
+        current[key] = {};
+      } else if (typeof current[key] !== 'object' || current[key] === null) {
+        // Handle other non-object types (numbers, booleans, null, etc.)
+        console.warn(`⚠️  ${locale}: Converting "${path.split('.').slice(0, i + 1).join('.')}" from ${typeof current[key]} to object to accommodate nested structure`);
+        current[key] = {};
+      }
+
       current = current[key];
     }
 

@@ -281,6 +281,146 @@ describe('I18nHelper', () => {
     }
   });
 
+  test('should convert string to object when setting nested values', () => {
+    // Create a test locale with string values
+    const testLocaleDir = path.join(__dirname, 'string-conversion-test');
+    const testLocalesDir = path.join(testLocaleDir, 'locales');
+
+    if (fs.existsSync(testLocaleDir)) {
+      fs.rmSync(testLocaleDir, { recursive: true });
+    }
+    fs.mkdirSync(testLocalesDir, { recursive: true });
+
+    // Create initial data with string values
+    const initialData = {
+      "simple": "Simple string",
+      "nested": {
+        "level1": "Level 1 string"
+      },
+      "another": "Another string"
+    };
+
+    fs.writeFileSync(
+      path.join(testLocalesDir, 'test-locale.json'),
+      JSON.stringify(initialData, null, 2)
+    );
+
+    const testHelper = new I18nHelper(testLocalesDir);
+
+    // Test 1: Convert top-level string to object
+    let warnings = [];
+    const originalWarn = console.warn;
+    console.warn = (msg) => warnings.push(msg);
+
+    const result1 = testHelper.set('test-locale', 'simple.child.grandchild', 'New value');
+    assert.strictEqual(result1, true);
+    assert.ok(warnings.some(w => w.includes('Converting "simple" from string to object')));
+
+    // Verify the structure
+    const updated1 = testHelper.get('test-locale', 'simple.child.grandchild');
+    assert.strictEqual(updated1, 'New value');
+
+    // Test 2: Convert nested string to object
+    warnings = [];
+    const result2 = testHelper.set('test-locale', 'nested.level1.level2', 'Another value');
+    assert.strictEqual(result2, true);
+    assert.ok(warnings.some(w => w.includes('Converting "nested.level1" from string to object')));
+
+    // Verify the structure
+    const updated2 = testHelper.get('test-locale', 'nested.level1.level2');
+    assert.strictEqual(updated2, 'Another value');
+
+    // Test 3: Convert multiple levels
+    warnings = [];
+    const result3 = testHelper.set('test-locale', 'another.b.c.d', 'Deep value');
+    assert.strictEqual(result3, true);
+    assert.ok(warnings.some(w => w.includes('Converting "another" from string to object')));
+
+    // Verify the structure
+    const updated3 = testHelper.get('test-locale', 'another.b.c.d');
+    assert.strictEqual(updated3, 'Deep value');
+
+    console.warn = originalWarn;
+
+    // Cleanup
+    if (fs.existsSync(testLocaleDir)) {
+      fs.rmSync(testLocaleDir, { recursive: true });
+    }
+  });
+
+  test('should convert string to object in setMultiple method', () => {
+    // Create a test locale with string values
+    const testLocaleDir = path.join(__dirname, 'multiple-conversion-test');
+    const testLocalesDir = path.join(testLocaleDir, 'locales');
+
+    if (fs.existsSync(testLocaleDir)) {
+      fs.rmSync(testLocaleDir, { recursive: true });
+    }
+    fs.mkdirSync(testLocalesDir, { recursive: true });
+
+    // Create initial data with string values
+    const initialData = {
+      "page": "Page string",
+      "section": {
+        "title": "Section title"
+      }
+    };
+
+    fs.writeFileSync(
+      path.join(testLocalesDir, 'en-US.json'),
+      JSON.stringify(initialData, null, 2)
+    );
+
+    fs.writeFileSync(
+      path.join(testLocalesDir, 'zh-hans.json'),
+      JSON.stringify(initialData, null, 2)
+    );
+
+    const testHelper = new I18nHelper(testLocalesDir);
+
+    // Test setMultiple with string to object conversion
+    let warnings = [];
+    const originalWarn = console.warn;
+    console.warn = (msg) => warnings.push(msg);
+
+    const translations = {
+      'en-US': 'English nested value',
+      'zh-hans': '中文嵌套值'
+    };
+
+    const results = testHelper.setMultiple(translations, 'page.nested.deep');
+    assert.strictEqual(results['en-US'], true);
+    assert.strictEqual(results['zh-hans'], true);
+
+    // Should have warnings for both locales
+    assert.ok(warnings.some(w => w.includes('en-US') && w.includes('Converting "page" from string to object')));
+    assert.ok(warnings.some(w => w.includes('zh-hans') && w.includes('Converting "page" from string to object')));
+
+    // Verify the values were set correctly
+    const enValue = testHelper.get('en-US', 'page.nested.deep');
+    const zhValue = testHelper.get('zh-hans', 'page.nested.deep');
+    assert.strictEqual(enValue, 'English nested value');
+    assert.strictEqual(zhValue, '中文嵌套值');
+
+    // Test converting at deeper level
+    warnings = [];
+    const results2 = testHelper.setMultiple({
+      'en-US': 'Deep English',
+      'zh-hans': '深层中文'
+    }, 'section.title.subtitle.text');
+
+    assert.strictEqual(results2['en-US'], true);
+    assert.strictEqual(results2['zh-hans'], true);
+    assert.ok(warnings.some(w => w.includes('Converting "section.title" from string to object')));
+
+    console.warn = originalWarn;
+
+    // Cleanup
+    if (fs.existsSync(testLocaleDir)) {
+      fs.rmSync(testLocaleDir, { recursive: true });
+    }
+  });
+
   // Cleanup after all tests
   test('cleanup', () => {
     cleanupTestFiles();
