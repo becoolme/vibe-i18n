@@ -109,14 +109,8 @@ async function main() {
     console.log('   Press Enter when ready to continue...');
 
     // Wait for user input
-    process.stdin.setRawMode(true);
-    process.stdin.resume();
-    await new Promise(resolve => {
-      process.stdin.once('data', () => {
-        process.stdin.setRawMode(false);
-        resolve();
-      });
-    });
+    console.log('Waiting 3 seconds before continuing...');
+    await new Promise(resolve => setTimeout(resolve, 3000));
   }
 
   // Commit version bump
