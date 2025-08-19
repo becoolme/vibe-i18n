@@ -48,7 +48,11 @@
                     </a>
                 </div>
                 <div class="code-demo">
-                    <pre><code class="language-bash">npx vibei18n</code></pre>
+                    <pre><code class="language-bash"># Install globally
+npm install -g vibei18n
+
+# Or use directly with npx
+npx vibei18n --help</code></pre>
                 </div>
             </div>
         </section>
@@ -65,11 +69,18 @@
                     <div class="prompt-content">
                         <p>When working with i18n translations, ALWAYS use the CLI commands instead of reading or modifying locale files directly. This ensures proper validation, formatting, and prevents corruption.</p>
                         
+                        <h4>🆕 New Features in v1.0.6:</h4>
+                        <ul>
+                            <li><strong>Bulk Translation Updates</strong>: Use <code>setMultiple</code> to update multiple locales at once with JSON input</li>
+                            <li><strong>Missing Translation Detection</strong>: Use <code>missing-translations</code> to scan your codebase for $t() calls and identify missing translations</li>
+                        </ul>
+                        
                         <h4>Available commands for translation management:</h4>
                         <ul>
                             <li>Show help: <code>npx vibei18n --help</code></li>
                             <li>Get translation: <code>npx vibei18n get &lt;locale&gt; &lt;key&gt;</code></li>
                             <li>Set translation: <code>npx vibei18n set &lt;locale&gt; &lt;key&gt; &lt;value&gt;</code></li>
+                            <li>Set multiple translations: <code>npx vibei18n setMultiple &lt;key&gt; '{"zh-hans":"值","fr-FR":"Valeur"}'</code></li>
                             <li>Check if exists: <code>npx vibei18n has &lt;locale&gt; &lt;key&gt;</code></li>
                             <li>Get all locales for key: <code>npx vibei18n getAll &lt;key&gt;</code></li>
                             <li>Find missing: <code>npx vibei18n missing &lt;key&gt;</code></li>
@@ -77,15 +88,34 @@
                             <li>Show statistics: <code>npx vibei18n stats</code></li>
                             <li>List locales: <code>npx vibei18n locales</code></li>
                             <li>Find hardcoded strings: <code>npx vibei18n hardcode-check --verbose</code></li>
+                            <li>Check missing translations in code: <code>npx vibei18n missing-translations --verbose</code></li>
                         </ul>
                         
                         <h4>Example workflow:</h4>
                         <ol>
                             <li>Check current state: <code>npx vibei18n stats</code></li>
+                            <li>Find missing translations in code: <code>npx vibei18n missing-translations --verbose --ext vue,tsx</code></li>
                             <li>Get specific translation: <code>npx vibei18n get en-US common.loading</code></li>
-                            <li>Update translation: <code>npx vibei18n set zh-hans common.loading "加载中..."</code></li>
-                            <li>Verify change: <code>npx vibei18n get zh-hans common.loading</code></li>
+                            <li>Update single translation: <code>npx vibei18n set zh-hans common.loading "加载中..."</code></li>
+                            <li><strong>🆕 Bulk update multiple locales</strong>: <code>npx vibei18n setMultiple page.title '{"zh-hans":"标题","fr-FR":"Titre","es-ES":"Título"}'</code></li>
+                            <li>Verify changes: <code>npx vibei18n getAll page.title</code></li>
                         </ol>
+                        
+                        <h4>🔍 Advanced Missing Translation Analysis:</h4>
+                        <pre><code class="language-bash"># Scan Vue files for $t() calls and find missing translations
+npx vibei18n missing-translations --verbose --ext vue,jsx,tsx --base-locale en-US
+
+# Example output shows:
+# - Total $t() calls found in codebase
+# - Missing translations compared to base locale
+# - Detailed file-by-file analysis</code></pre>
+                        
+                        <h4>⚡ Efficient Bulk Updates:</h4>
+                        <pre><code class="language-bash"># Update multiple locales for one key at once
+npx vibei18n setMultiple "nav.home" '{"zh-hans":"首页","ja-JP":"ホーム","ko-KR":"홈"}'
+
+# Skip if key already exists (useful for batch imports)
+npx vibei18n setMultiple "nav.about" '{"zh-hans":"关于","fr-FR":"À propos"}' --skip-if-exists</code></pre>
                     </div>
                 </div>
             </div>
@@ -120,6 +150,11 @@
                         <p>Scan your codebase for hardcoded strings that should be internationalized. Skips code blocks intelligently.</p>
                     </div>
                     <div class="feature-card">
+                        <span class="feature-icon">MISSING</span>
+                        <h3>Code Translation Analysis</h3>
+                        <p>Scan Vue/React files for <code>$t()</code> function calls and detect missing translations by comparing with base locale.</p>
+                    </div>
+                    <div class="feature-card">
                         <span class="feature-icon">STATS</span>
                         <h3>Detailed Statistics</h3>
                         <p>Get comprehensive insights into translation coverage, missing keys, and duplicate values across locales.</p>
@@ -128,6 +163,11 @@
                         <span class="feature-icon">DUPE</span>
                         <h3>Duplicate Detection</h3>
                         <p>Find duplicate translations across locales and identify opportunities for consolidation and optimization.</p>
+                    </div>
+                    <div class="feature-card">
+                        <span class="feature-icon">BULK</span>
+                        <h3>Bulk Translation Updates</h3>
+                        <p>Use <code>setMultiple</code> to update translations for multiple locales at once with JSON input for efficiency.</p>
                     </div>
                     <div class="feature-card">
                         <span class="feature-icon">API</span>
@@ -196,7 +236,26 @@ helper.batchUpdate({
     'page.title': '页面标题',
     'page.description': '页面描述'
   }
+});
+
+// Set multiple locales for one key
+helper.setMultiple('page.title', {
+  'zh-hans': '标题',
+  'fr-FR': 'Titre',
+  'es-ES': 'Título'
 });</code></pre>
+                    </div>
+                    <div class="usage-example">
+                        <h3>Missing Translation Detection</h3>
+                        <pre><code class="language-javascript">// Check for missing translations in your codebase
+const missingResults = helper.checkMissingTranslations('./src', {
+  extensions: ['.vue', '.jsx', '.tsx'],
+  baseLocale: 'en-US',
+  verbose: true
+});
+
+console.log('Missing translations:', missingResults.missing.length);
+console.log('Total $t() calls found:', missingResults.summary.totalKeys);</code></pre>
                     </div>
                 </div>
             </div>
