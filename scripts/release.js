@@ -12,7 +12,7 @@ Usage: node scripts/release.js <type>
 
 Types:
   patch  - Bug fixes (1.0.0 -> 1.0.1)
-  minor  - New features (1.0.0 -> 1.1.0)  
+  minor  - New features (1.0.0 -> 1.1.0)
   major  - Breaking changes (1.0.0 -> 2.0.0)
 
 Example:
@@ -107,7 +107,7 @@ async function main() {
   if (fs.existsSync(changelogPath)) {
     console.log('📝 Please update CHANGELOG.md with the new version changes');
     console.log('   Press Enter when ready to continue...');
-    
+
     // Wait for user input
     process.stdin.setRawMode(true);
     process.stdin.resume();
