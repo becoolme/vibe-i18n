@@ -101,27 +101,27 @@ jobs:
         name: Release ${{ github.ref_name }}
         body: |
           ## Changes in this release
-          
+
           ### New Features
           - ✨ Added `setMultiple` command for bulk translation updates
           - 🔍 Enhanced missing translation detection with `missing-translations` command
           - 🛠️ Added comprehensive lint scripts for code formatting
           - 🎯 Improved hardcoded string detection with better filtering
-          
+
           ### Improvements
           - 📦 Fixed package verification in CI/CD pipeline
           - 🧹 Removed trailing whitespace across all source files
           - 📚 Enhanced documentation and usage examples
           - ⚡ Better error handling and user feedback
-          
+
           ### Tools & Commands
           ```bash
           # New bulk translation command
           npx vibei18n setMultiple page.title '{"zh-hans":"标题","fr-FR":"Titre"}'
-          
+
           # Check for missing translations
           npx vibei18n missing-translations --verbose
-          
+
           # Format checking (for contributors)
           npm run lint
           npm run lint:whitespace:fix
