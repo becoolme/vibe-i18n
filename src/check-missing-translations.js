@@ -6,11 +6,51 @@ import path from 'path';
  * Extract all $t() function calls from Vue files and compare with translation files
  */
 class MissingTranslationChecker {
-  constructor(projectPath, localesPath = 'i18n/locales', defaultLocale = 'en-US') {
+  constructor(projectPath, localesPath = 'i18n/locales', defaultLocale = null) {
     this.projectPath = projectPath;
     this.localesPath = path.join(projectPath, localesPath);
     this.defaultLocale = defaultLocale;
-    this.defaultLocaleFile = path.join(this.localesPath, `${defaultLocale}.json`);
+    this.detectedLocale = null; // Will be set by detectBaseLocale
+  }
+
+  /**
+   * Detect the base locale file automatically
+   * @returns {string|null}
+   */
+  detectBaseLocale() {
+    if (this.detectedLocale) return this.detectedLocale;
+
+    if (this.defaultLocale) {
+      this.detectedLocale = this.defaultLocale;
+      return this.detectedLocale;
+    }
+
+    const possibleBaseLocales = ['en', 'en-US', 'en-GB', 'en_US', 'en_GB'];
+
+    try {
+      const files = fs.readdirSync(this.localesPath);
+      const availableLocales = files
+        .filter(file => file.endsWith('.json') || file.endsWith('.js'))
+        .map(file => path.basename(file, path.extname(file)));
+
+      for (const locale of possibleBaseLocales) {
+        if (availableLocales.includes(locale)) {
+          this.detectedLocale = locale;
+          return this.detectedLocale;
+        }
+      }
+
+      // If no English locale found, use the first available locale
+      if (availableLocales.length > 0) {
+        console.warn(`⚠️  No English locale found, using ${availableLocales[0]} as base`);
+        this.detectedLocale = availableLocales[0];
+        return this.detectedLocale;
+      }
+    } catch (error) {
+      // Directory doesn't exist or can't be read
+    }
+
+    return null;
   }
 
   /**
@@ -93,11 +133,18 @@ class MissingTranslationChecker {
    * Load default language file
    */
   loadDefaultTranslations() {
+    const baseLocale = this.detectBaseLocale();
+    if (!baseLocale) {
+      console.error('❌ No base locale found');
+      return null;
+    }
+
+    const baseLocaleFile = path.join(this.localesPath, `${baseLocale}.json`);
     try {
-      const content = fs.readFileSync(this.defaultLocaleFile, 'utf8');
+      const content = fs.readFileSync(baseLocaleFile, 'utf8');
       return JSON.parse(content);
     } catch (error) {
-      console.error(`❌ Error loading default locale file (${this.defaultLocaleFile}):`, error.message);
+      console.error(`❌ Error loading base locale file (${baseLocaleFile}):`, error.message);
       return null;
     }
   }
@@ -154,8 +201,9 @@ class MissingTranslationChecker {
     }
 
     // 3. Get all existing translation keys
+    const baseLocale = this.detectBaseLocale();
     const existingKeys = this.getAllTranslationKeys(defaultTranslations);
-    console.log(`📚 Found ${existingKeys.length} keys in ${this.defaultLocale}.json\n`);
+    console.log(`📚 Found ${existingKeys.length} keys in ${baseLocale}.json\n`);
 
     // 4. Find missing keys
     const missingKeys = [];
@@ -188,8 +236,8 @@ class MissingTranslationChecker {
     console.log('📊 TRANSLATION CHECK RESULTS');
     console.log('=' .repeat(60));
 
-    console.log(`\n✅ Keys found in ${this.defaultLocale}.json: ${foundKeys.length}`);
-    console.log(`❌ Keys missing in ${this.defaultLocale}.json: ${missingKeys.length}`);
+    console.log(`\n✅ Keys found in ${baseLocale}.json: ${foundKeys.length}`);
+    console.log(`❌ Keys missing in ${baseLocale}.json: ${missingKeys.length}`);
     console.log(`📝 Total keys used in project: ${allKeys.length}`);
 
     if (missingKeys.length > 0) {
@@ -220,9 +268,9 @@ class MissingTranslationChecker {
 
       console.log('\n💡 SUGGESTIONS:');
       console.log('-' .repeat(40));
-      console.log(`1. Add missing keys to ${this.defaultLocaleFile}`);
+      console.log(`1. Add missing keys to ${baseLocale}.json`);
       console.log('2. Use the vibei18n CLI to manage translations:');
-      console.log('   npx vibei18n set en-US "key.path" "Translation value"');
+      console.log('   npx vibei18n set en "key.path" "Translation value"');
       console.log('3. Run this check again after adding translations');
     } else {
       console.log('\n🎉 All translation keys are properly defined!');
@@ -256,7 +304,7 @@ class MissingTranslationChecker {
 if (process.argv[1].endsWith('check-missing-translations.js')) {
   const projectPath = process.argv[2] || process.cwd();
   const localesPath = process.argv[3] || 'i18n/locales';
-  const defaultLocale = process.argv[4] || 'en-US';
+  const defaultLocale = process.argv[4] || null; // auto-detect if not specified
 
   const checker = new MissingTranslationChecker(projectPath, localesPath, defaultLocale);
   checker.checkMissingTranslations();

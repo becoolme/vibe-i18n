@@ -34,7 +34,7 @@ Options for hardcode-check:
 Options for missing-translations:
   --verbose, -v                          Show detailed output
   --extensions, --ext <ext1,ext2>        File extensions to scan (default: .vue,.jsx,.tsx)
-  --base-locale <locale>                 Base locale to compare against (default: en-US)
+  --base-locale <locale>                 Base locale to compare against (default: auto-detect)
 
 Options for setMultiple:
   --skip-if-exists                       Skip setting if the key already exists
@@ -70,9 +70,9 @@ async function createInitialStructure(localesDir) {
     console.log(`✅ Created locales directory: ${localesDir}`);
   }
 
-  // Create initial en-US.json if it doesn't exist
-  const enUSPath = path.join(localesDir, 'en-US.json');
-  if (!fs.existsSync(enUSPath)) {
+  // Create initial en.json if it doesn't exist
+  const enPath = path.join(localesDir, 'en.json');
+  if (!fs.existsSync(enPath)) {
     const initialContent = {
       "common": {
         "loading": "Loading...",
@@ -86,8 +86,8 @@ async function createInitialStructure(localesDir) {
       }
     };
 
-    fs.writeFileSync(enUSPath, JSON.stringify(initialContent, null, 2), 'utf8');
-    console.log(`✅ Created initial en-US.json file`);
+    fs.writeFileSync(enPath, JSON.stringify(initialContent, null, 2), 'utf8');
+    console.log(`✅ Created initial en.json file`);
   }
 
   console.log(`\n🎉 Locales structure initialized!`);
@@ -239,7 +239,7 @@ async function main() {
       case 'stats': {
         const stats = helper.getStats();
         if (!stats) {
-          console.error('No base locale (en-US) found');
+          console.error('No base locale (en) found');
           process.exit(1);
         }
         console.log('Translation Statistics:');
@@ -262,6 +262,20 @@ async function main() {
       }
 
       case 'check': {
+        // Check if no translation files exist
+        if (helper.getLocales().length === 0) {
+          console.error('No locale files found');
+          console.log('💡 Run "npx vibei18n init" to create initial structure');
+          process.exit(1);
+        }
+
+        const detectedBaseLocale = helper.detectBaseLocale();
+        if (!detectedBaseLocale) {
+          console.error('No base locale found');
+          console.log('💡 Run "npx vibei18n init" to create initial structure');
+          process.exit(1);
+        }
+
         const detailed = rest.includes('--detailed') || rest.includes('-d');
         helper.checkTranslations(detailed);
         break;
@@ -295,7 +309,7 @@ async function main() {
         }
 
         // Parse base locale parameter
-        let baseLocale = 'en-US'; // default
+        let baseLocale = null; // will be auto-detected
         const localeIndex = rest.findIndex(arg => arg === '--base-locale');
         if (localeIndex !== -1 && localeIndex + 1 < rest.length) {
           baseLocale = rest[localeIndex + 1];

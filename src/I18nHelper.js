@@ -62,7 +62,7 @@ export class I18nHelper {
 
   /**
    * Load a locale file (supports both .js and .json)
-   * @param {string} locale - The locale code (e.g., 'en-US')
+   * @param {string} locale - The locale code (e.g., 'en-US', 'en')
    * @returns {Object} The parsed content of the locale file
    */
   loadLocale(locale) {
@@ -313,11 +313,38 @@ export class I18nHelper {
   }
 
   /**
+   * Detect the base locale file automatically
+   * Checks for en, en-US, en-GB in that order
+   * @returns {string|null} The detected base locale or null if none found
+   */
+  detectBaseLocale() {
+    const possibleBaseLocales = ['en', 'en-US', 'en-GB', 'en_US', 'en_GB'];
+
+    for (const locale of possibleBaseLocales) {
+      if (this.locales.includes(locale)) {
+        return locale;
+      }
+    }
+
+    // If no English locale found, use the first available locale
+    if (this.locales.length > 0) {
+      console.warn(`⚠️  No English locale found, using ${this.locales[0]} as base`);
+      return this.locales[0];
+    }
+
+    return null;
+  }
+
+  /**
    * Get statistics about translation completeness
    * @returns {Object} Statistics for each locale
    */
   getStats() {
-    const baseLocale = 'en-US';
+    const baseLocale = this.detectBaseLocale();
+    if (!baseLocale) {
+      console.error('❌ No base locale found');
+      return null;
+    }
     const baseContent = this.loadLocale(baseLocale);
     if (!baseContent) return null;
 
@@ -355,10 +382,14 @@ export class I18nHelper {
   checkTranslations(detailed = false) {
     console.log('🔍 Checking translation completeness...\n');
 
-    const baseLocale = 'en-US';
+    const baseLocale = this.detectBaseLocale();
+    if (!baseLocale) {
+      console.error('❌ No base locale found');
+      return null;
+    }
     const baseContent = this.loadLocale(baseLocale);
     if (!baseContent) {
-      console.error('❌ en-US.json not found!');
+      console.error(`❌ ${baseLocale}.json not found!`);
       return null;
     }
 
@@ -506,7 +537,12 @@ export class I18nHelper {
   findDuplicates() {
     console.log('🔍 Checking for duplicate translations...\n');
 
-    const baseContent = this.loadLocale('en-US');
+    const baseLocale = this.detectBaseLocale();
+    if (!baseLocale) {
+      console.error('❌ No base locale found');
+      return null;
+    }
+    const baseContent = this.loadLocale(baseLocale);
     if (!baseContent) return null;
 
     const basePaths = this._getAllPaths(baseContent);
@@ -1061,7 +1097,7 @@ export class I18nHelper {
     const {
       extensions = ['.vue', '.jsx', '.tsx'],
       excludeDirs = ['node_modules', '.git', 'dist', 'build', '.nuxt', '.output'],
-      baseLocale = 'en-US',
+      baseLocale = null,
       verbose = false
     } = options;
 
@@ -1115,21 +1151,26 @@ export class I18nHelper {
     console.log(`🔑 Found ${allKeysArray.length} unique translation keys in ${Object.keys(fileKeyMap).length} files`);
 
     // 2. Load base locale file
-    const baseContent = this.loadLocale(baseLocale);
+    const detectedBaseLocale = baseLocale || this.detectBaseLocale();
+    if (!detectedBaseLocale) {
+      console.error('❌ No base locale found');
+      return null;
+    }
+    const baseContent = this.loadLocale(detectedBaseLocale);
     if (!baseContent) {
-      console.error(`❌ Base locale file not found: ${baseLocale}`);
+      console.error(`❌ Base locale file not found: ${detectedBaseLocale}`);
       return null;
     }
 
     const availableKeys = this._getAllPaths(baseContent);
-    console.log(`📚 Found ${availableKeys.length} keys in ${baseLocale}.json`);
+    console.log(`📚 Found ${availableKeys.length} keys in ${detectedBaseLocale}.json`);
 
     // 3. Compare keys
     const missingKeys = [];
     const foundKeys = [];
 
     for (const key of allKeysArray) {
-      if (this.has(baseLocale, key)) {
+      if (this.has(detectedBaseLocale, key)) {
         foundKeys.push(key);
       } else {
         missingKeys.push(key);
@@ -1137,7 +1178,7 @@ export class I18nHelper {
     }
 
     // 4. Report results
-    this._reportMissingTranslations(missingKeys, foundKeys, fileKeyMap, allKeysArray, baseLocale, verbose);
+    this._reportMissingTranslations(missingKeys, foundKeys, fileKeyMap, allKeysArray, detectedBaseLocale, verbose);
 
     return {
       totalKeys: allKeysArray.length,
@@ -1229,7 +1270,7 @@ export class I18nHelper {
       console.log('-'.repeat(40));
       console.log(`1. Add missing keys to your ${baseLocale}.json file`);
       console.log('2. Use vibei18n to add translations:');
-      console.log('   npx vibei18n set en-US "key.path" "Translation value"');
+      console.log('   npx vibei18n set en "key.path" "Translation value"');
       console.log('3. Run this check again after adding translations');
     } else {
       console.log('\n🎉 All translation keys are properly defined!');
