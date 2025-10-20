@@ -24,7 +24,7 @@ jobs:
         version: 8
 
     - name: Use Node.js 20.x
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 20.x
         cache: 'pnpm'
@@ -65,7 +65,7 @@ jobs:
         version: 8
 
     - name: Use Node.js 20.x
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 20.x
         registry-url: 'https://registry.npmjs.org'
@@ -145,7 +145,7 @@ jobs:
 
     steps:
     - name: Use Node.js 20.x
-      uses: actions/setup-node@v4
+      uses: actions/setup-node@v6
       with:
         node-version: 20.x
 
